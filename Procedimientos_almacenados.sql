@@ -208,39 +208,34 @@ DELIMITER ;
 
 -- 5. Reporte de gasto alimenticio
      		
+DELIMITER //
 
 CREATE PROCEDURE sp_ReporteGastoAlimento (
-IN p_ganado_id  INT,
-IN p_fecha_inicio DATE,
-IN p_fecha_final DATE,
-OUT p_mensaje VARCHAR(100),
-OUT p_total_gastado DECIMAL(10,2)
+    IN p_ganado_id INT,
+    IN p_fecha_inicio DATE,
+    IN p_fecha_final DATE,
+    OUT p_total_gastado DECIMAL(10,2),
+    OUT p_mensaje VARCHAR(100)
 )
-
 BEGIN
-	
-	DECLARE v_existe_ganado INT DEFAULT 0;
-    DECLARE v_existe_finca INT DEFAULT 0;
-	
-	DECLARE EXIT HANDLER FOR SQLEXCEPTION
-    BEGIN
-        ROLLBACK;
-        RESIGNAL;
-    END;
+    -- Inicializamos el parámetro de salida por si no hay registros
+    SET p_total_gastado = 0.00;
 
-    START TRANSACTION; 
-    
+    -- Realizamos el cálculo directo con el JOIN
     SELECT SUM(al.cantidad_kg * a.costo)
     INTO p_total_gastado
-    FROM alimentos a
-    JOIN alimentacion al ON a.alimento_id = al.alimento_id
-    WHERE ganado_id = p_ganado_id AND al.fecha BETWEEN p_fecha_inicio AND p_fecha_final;
-    
-    	SET p_mensaje = 'Reporte generado ocn exito';
-    COMMIT;
-    
+    FROM alimentacion al
+    JOIN alimentos a ON al.alimento_id = a.alimento_id
+    WHERE al.ganado_id = p_ganado_id 
+      AND al.fecha BETWEEN p_fecha_inicio AND p_fecha_final;
+
+    -- Si el animal existe pero no consumió nada, el SUM da NULL. Lo convertimos a 0.
+    IF p_total_gastado IS NULL THEN
+        SET p_total_gastado = 0.00;
     END IF;
-	
+
+    SET p_mensaje = 'Reporte generado con exito';
+
 END //
 
 DELIMITER ;
