@@ -1,55 +1,62 @@
--- CREACION Y GESTIÓN DE USUARIOS
+USE ASOGASINGA;
 
--- nota: se que ponerlo % asi no es lo mas acertado en cuestión de seguridad pero por temas de practicidad del taller, lo pondre de esta manera
+-- 1. CREACIÓN DE ROLES 
+CREATE ROLE IF NOT EXISTS 
+    'administrador_del_sistema', 
+    'personal_de_salud_animal', 
+    'encargado_de_Finca', 
+    'recurso_humanos', 
+    'auditor_externo';
 
- -- 1. Rol: Administrador del Sistema
+-- 2. ASIGNACIÓN DE PRIVILEGIOS A LOS ROLES
 
-CREATE USER 'usuario_admin'@'%' IDENTIFIED BY 'AdminSeguro2026*';
+-- Privilegios: Administrador del Sistema
+GRANT ALL PRIVILEGES ON ASOGASINGA.* TO 'administrador_del_sistema' WITH GRANT OPTION;
 
-GRANT ALL PRIVILEGES ON ASOGASINGA.* TO 'usuario_admin'@'%' WITH GRANT OPTION;
+-- Privilegios: Personal de Salud Animal
+GRANT SELECT ON ASOGASINGA.ganado TO 'personal_de_salud_animal';
+GRANT SELECT ON ASOGASINGA.fincas TO 'personal_de_salud_animal';
+GRANT INSERT ON ASOGASINGA.vacunacion TO 'personal_de_salud_animal';
+GRANT INSERT ON ASOGASINGA.vacunas TO 'personal_de_salud_animal';
+GRANT EXECUTE ON PROCEDURE ASOGASINGA.sp_RegistrarVacunacion TO 'personal_de_salud_animal';
 
+-- Privilegios: Encargado de Finca
+GRANT SELECT, INSERT, UPDATE ON ASOGASINGA.ganado TO 'encargado_de_Finca';
+GRANT SELECT, INSERT, UPDATE ON ASOGASINGA.produccion_leche TO 'encargado_de_Finca';
+GRANT SELECT, INSERT, UPDATE ON ASOGASINGA.alimentacion TO 'encargado_de_Finca';
+GRANT EXECUTE ON PROCEDURE ASOGASINGA.sp_RegistrarProduccionLeche TO 'encargado_de_Finca';
+GRANT EXECUTE ON FUNCTION ASOGASINGA.fn_CalcularEdadMeses TO 'encargado_de_Finca';
 
--- 2. Rol: Personal de Salud Animal
+-- Privilegios: Recursos Humanos
+GRANT SELECT, INSERT, UPDATE, DELETE ON ASOGASINGA.empleados TO 'recurso_humanos';
+GRANT EXECUTE ON PROCEDURE ASOGASINGA.sp_ActualizarSalarioEmpleado TO 'recurso_humanos';
 
-CREATE USER 'usuario_veterinario'@'%' IDENTIFIED BY 'Veterinario2026*';
-
-
-GRANT SELECT ON ASOGASINGA.ganado TO 'usuario_veterinario'@'%';
-GRANT SELECT ON ASOGASINGA.fincas TO 'usuario_veterinario'@'%';
-
-
-GRANT INSERT ON ASOGASINGA.vacunacion TO 'usuario_veterinario'@'%';
-GRANT INSERT ON ASOGASINGA.vacunas TO 'usuario_veterinario'@'%';
-
-
-GRANT EXECUTE ON PROCEDURE ASOGASINGA.sp_RegistrarVacunacion TO 'usuario_veterinario'@'%';
-
--- 3. Rol: Encargado de Finca / Producción
-
-CREATE USER 'usuario_operador'@'%' IDENTIFIED BY 'Operador2026*';
-
-GRANT SELECT, INSERT, UPDATE ON ASOGASINGA.ganado TO 'usuario_operador'@'%';
-GRANT SELECT, INSERT, UPDATE ON ASOGASINGA.produccion_leche TO 'usuario_operador'@'%';
-GRANT SELECT, INSERT, UPDATE ON ASOGASINGA.alimentacion  TO 'usuario_operador'@'%';
-
-GRANT EXECUTE ON PROCEDURE ASOGASINGA.sp_RegistrarProduccionLeche TO 'usuario_operador'@'%';
-
-GRANT EXECUTE ON FUNCTION ASOGASINGA.fn_CalcularEdadMeses TO 'usuario_operador'@'%';
+-- Privilegios: Auditor Externo
+GRANT SELECT ON ASOGASINGA.* TO 'auditor_externo';
 
 
--- 4. Rol: Recursos Humanos
-
-CREATE USER 'usuario_rrhh'@'%' IDENTIFIED BY 'RecursosHumanos2026*';
-
-GRANT SELECT, INSERT, UPDATE, DELETE ON ASOGASINGA.empleados TO 'usuario_rrhh'@'%';
-
-
-GRANT EXECUTE ON PROCEDURE ASOGASINGA.sp_ActualizarSalarioEmpleado TO 'usuario_rrhh'@'%';
+-- 3. CREACIÓN DE USUARIOS 
+CREATE USER IF NOT EXISTS 'usuario_admin'@'%' IDENTIFIED BY 'AdminSeguro2026*';
+CREATE USER IF NOT EXISTS 'usuario_veterinario'@'%' IDENTIFIED BY 'Veterinario2026*';
+CREATE USER IF NOT EXISTS 'usuario_operador'@'%' IDENTIFIED BY 'Operador2026*';
+CREATE USER IF NOT EXISTS 'usuario_rrhh'@'%' IDENTIFIED BY 'RecursosHumanos2026*';
+CREATE USER IF NOT EXISTS 'usuario_auditor'@'%' IDENTIFIED BY 'Auditor2026*';
 
 
--- 5.Rol: Auditor Externo / Consulta
+-- 4. ASIGNACIÓN DE ROLES A LOS USUARIOS
+GRANT 'administrador_del_sistema' TO 'usuario_admin'@'%';
+GRANT 'personal_de_salud_animal' TO 'usuario_veterinario'@'%';
+GRANT 'encargado_de_Finca' TO 'usuario_operador'@'%';
+GRANT 'recurso_humanos' TO 'usuario_rrhh'@'%';
+GRANT 'auditor_externo' TO 'usuario_auditor'@'%';
 
-CREATE USER 'usuario_auditor'@'%' IDENTIFIED BY 'Auditor2026*';
 
+-- 5. ACTIVACIÓN DE ROLES POR DEFECTO
+SET DEFAULT ROLE ALL TO 
+    'usuario_admin'@'%', 
+    'usuario_veterinario'@'%', 
+    'usuario_operador'@'%', 
+    'usuario_rrhh'@'%', 
+    'usuario_auditor'@'%';
 
-GRANT SELECT ON ASOGASINGA.* TO 'usuario_auditor'@'%';
+FLUSH PRIVILEGES;
